@@ -227,7 +227,7 @@
       margin-top: 2px;
     }
 
-    /* Featured Large Photo Container with Focal Pinch Zoom & Pan */
+    /* Featured Large Photo Container with Full Bounds Pan & Zoom */
     .featured-photo-container {
       position: relative;
       border-radius: 14px;
@@ -249,7 +249,7 @@
       height: 100%;
       object-fit: cover;
       display: block;
-      transform-origin: 0 0;
+      transform-origin: center center;
       will-change: transform;
       transition: transform 0.05s linear;
     }
@@ -371,7 +371,7 @@
         🏃 Pista Río la Silla <span class="badge">100m</span>
       </div>
       <div id="statusBadge" style="font-size: 0.75rem; color: var(--text-muted);">
-        🔍 HD 2800px + Zoom Focal
+        🔍 Zoom y Arrastre Completo 360°
       </div>
     </div>
 
@@ -420,7 +420,7 @@
       </div>
 
       <div class="featured-photo-container" data-station="station-minus1">
-        <div class="zoom-hint-banner">🔍 Pinch Zoom + Arrastrar</div>
+        <div class="zoom-hint-banner">🔍 Zoom + Arrastrar 360°</div>
         <img id="img-station-minus1" src="IMG_0310.jpg" alt="Estación -1" loading="lazy">
         <div class="photo-switch-banner">
           🔄 Tocar para alternar
@@ -472,7 +472,7 @@
       </div>
 
       <div class="featured-photo-container" data-station="station-1">
-        <div class="zoom-hint-banner">🔍 Pinch Zoom + Arrastrar</div>
+        <div class="zoom-hint-banner">🔍 Zoom + Arrastrar 360°</div>
         <img id="img-station-1" src="IMG_0298.jpg" alt="Estación 1" loading="lazy">
         <div class="photo-switch-banner">
           🔄 Tocar para alternar
@@ -500,7 +500,7 @@
       </div>
 
       <div class="featured-photo-container" data-station="station-2">
-        <div class="zoom-hint-banner">🔍 Pinch Zoom + Arrastrar</div>
+        <div class="zoom-hint-banner">🔍 Zoom + Arrastrar 360°</div>
         <img id="img-station-2" src="IMG_0300.jpg" alt="Estación 2" loading="lazy">
         <div class="photo-switch-banner">
           🔄 Tocar para alternar
@@ -528,7 +528,7 @@
       </div>
 
       <div class="featured-photo-container" data-station="station-3">
-        <div class="zoom-hint-banner">🔍 Pinch Zoom + Arrastrar</div>
+        <div class="zoom-hint-banner">🔍 Zoom + Arrastrar 360°</div>
         <img id="img-station-3" src="IMG_0302.jpg" alt="Estación 3" loading="lazy">
         <div class="photo-switch-banner">
           🔄 Tocar para alternar
@@ -556,7 +556,7 @@
       </div>
 
       <div class="featured-photo-container" data-station="station-4">
-        <div class="zoom-hint-banner">🔍 Pinch Zoom + Arrastrar</div>
+        <div class="zoom-hint-banner">🔍 Zoom + Arrastrar 360°</div>
         <img id="img-station-4" src="IMG_0304.jpg" alt="Estación 4" loading="lazy">
         <div class="photo-switch-banner">
           🔄 Tocar para alternar
@@ -584,7 +584,7 @@
       </div>
 
       <div class="featured-photo-container" data-station="station-5">
-        <div class="zoom-hint-banner">🔍 Pinch Zoom + Arrastrar</div>
+        <div class="zoom-hint-banner">🔍 Zoom + Arrastrar 360°</div>
         <img id="img-station-5" src="IMG_0306.jpg" alt="Estación 5" loading="lazy">
         <div class="photo-switch-banner">
           🔄 Tocar para alternar
@@ -612,7 +612,7 @@
       </div>
 
       <div class="featured-photo-container" data-station="station-6">
-        <div class="zoom-hint-banner">🔍 Pinch Zoom + Arrastrar</div>
+        <div class="zoom-hint-banner">🔍 Zoom + Arrastrar 360°</div>
         <img id="img-station-6" src="IMG_0308.jpg" alt="Estación 6" loading="lazy">
         <div class="photo-switch-banner">
           🔄 Tocar para alternar
@@ -691,7 +691,7 @@
       if (headingEl) headingEl.textContent = photoData.heading;
     }
 
-    // Focal Point Pinch-to-Zoom & Pan / Drag Implementation
+    // Complete Unconstrained Full-Bounds Pinch-to-Zoom & Pan / Drag Implementation
     document.querySelectorAll('.featured-photo-container').forEach(container => {
       const img = container.querySelector('img');
       const stationId = container.dataset.station;
@@ -715,24 +715,28 @@
       let touchStartTime = 0;
       let lastTapTime = 0;
 
+      img.style.transformOrigin = 'center center';
+
       function updateTransform() {
-        // Clamp scale between 1x and 4.5x
-        scale = Math.min(Math.max(1, scale), 4.5);
+        scale = Math.min(Math.max(1, scale), 5.5);
 
         const rect = container.getBoundingClientRect();
-        const maxTransX = ((scale - 1) * rect.width) / 2;
-        const maxTransY = ((scale - 1) * rect.height) / 2;
+        
+        // Calculate max shift limits symmetrically based on center origin
+        // Adding generous margins to ensure top, bottom, left and right edges are 100% reachable!
+        const maxShiftX = ((scale - 1) * rect.width) / 2 + (scale * 30);
+        const maxShiftY = ((scale - 1) * rect.height) / 2 + (scale * 30);
 
         if (scale <= 1.05) {
           posX = 0;
           posY = 0;
           scale = 1;
         } else {
-          posX = Math.min(Math.max(-maxTransX, posX), maxTransX);
-          posY = Math.min(Math.max(-maxTransY, posY), maxTransY);
+          posX = Math.min(Math.max(-maxShiftX, posX), maxShiftX);
+          posY = Math.min(Math.max(-maxShiftY, posY), maxShiftY);
         }
 
-        img.style.transform = `translate(${posX}px, ${posY}px) scale(${scale})`;
+        img.style.transform = `translate3d(${posX}px, ${posY}px, 0px) scale(${scale})`;
 
         const panorama = document.getElementById('panoramaScroll');
         if (scale > 1.05) {
@@ -781,8 +785,6 @@
           e.preventDefault();
           const dist = getDistance(e.touches[0], e.touches[1]);
           const newScale = startScale * (dist / startDist);
-
-          // Calculate focal point shift
           const currentCenter = getCenter(e.touches[0], e.touches[1]);
           const scaleChange = newScale / startScale;
 
@@ -830,8 +832,7 @@
               const tapX = touch.clientX - rect.left;
               const tapY = touch.clientY - rect.top;
 
-              scale = 3.0;
-              // Center zoom around double-tap point
+              scale = 3.2;
               posX = (rect.width / 2 - tapX) * 2;
               posY = (rect.height / 2 - tapY) * 2;
             }
