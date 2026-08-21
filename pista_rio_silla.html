@@ -1,0 +1,894 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>Pista Río la Silla — Guía de Tramo 100m</title>
+
+  <!-- Modern Styling & Typography -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;900&family=JetBrains+Mono:wght@700&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --bg-dark: #0a0f14;
+      --card-bg: #121922;
+      --accent-green: #00ff87;
+      --accent-cyan: #60efff;
+      --accent-orange: #ff9f43;
+      --text-main: #f0f6fc;
+      --text-muted: #8b949e;
+      --border-color: rgba(255, 255, 255, 0.14);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      touch-action: manipulation;
+    }
+
+    body {
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      background-color: var(--bg-dark);
+      color: var(--text-main);
+      overflow-x: hidden;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* App Header */
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(10, 15, 20, 0.95);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border-color);
+      padding: 12px 16px;
+    }
+
+    .header-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+
+    .app-title {
+      font-size: 1.15rem;
+      font-weight: 900;
+      letter-spacing: -0.5px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .app-title span.badge {
+      background: linear-gradient(135deg, var(--accent-green), var(--accent-cyan));
+      color: #000;
+      font-size: 0.7rem;
+      font-weight: 900;
+      padding: 2px 6px;
+      border-radius: 6px;
+      text-transform: uppercase;
+    }
+
+    /* Controls Bar */
+    .controls-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    .btn-toggle {
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid var(--border-color);
+      color: var(--text-main);
+      padding: 10px 12px;
+      border-radius: 10px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .btn-toggle.active {
+      background: linear-gradient(135deg, rgba(0, 255, 135, 0.2), rgba(96, 239, 255, 0.2));
+      border-color: var(--accent-green);
+      color: var(--accent-green);
+    }
+
+    /* Track Progress Meter */
+    .track-meter-container {
+      margin-top: 10px;
+    }
+
+    .track-labels {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.72rem;
+      color: var(--text-muted);
+      margin-bottom: 4px;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .progress-bar-bg {
+      height: 8px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 4px;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .progress-bar-fill {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, var(--accent-green), var(--accent-cyan));
+      border-radius: 4px;
+      transition: width 0.3s ease;
+    }
+
+    /* GPS Telemetry Bar */
+    .gps-telemetry {
+      background: rgba(255, 159, 67, 0.14);
+      border-left: 4px solid var(--accent-orange);
+      padding: 8px 14px;
+      font-size: 0.8rem;
+      display: none;
+      align-items: center;
+      justify-content: space-between;
+      color: #ffeaa7;
+    }
+
+    .gps-telemetry.active {
+      display: flex;
+    }
+
+    /* Main Scrollable Track Panorama Container */
+    .panorama-scroll-container {
+      flex: 1;
+      display: flex;
+      overflow-x: auto;
+      scroll-snap-type: x mandatory;
+      scroll-behavior: smooth;
+      -webkit-overflow-scrolling: touch;
+      padding: 16px;
+      gap: 16px;
+    }
+
+    .panorama-scroll-container.lock-scroll {
+      overflow-x: hidden !important;
+      scroll-snap-type: none !important;
+    }
+
+    .panorama-scroll-container::-webkit-scrollbar {
+      height: 6px;
+    }
+    .panorama-scroll-container::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: 3px;
+    }
+
+    /* Station Card */
+    .station-card {
+      flex: 0 0 90vw;
+      max-width: 440px;
+      scroll-snap-align: center;
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 20px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      position: relative;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+    }
+
+    .station-card.active-gps {
+      border-color: var(--accent-green);
+      box-shadow: 0 0 24px rgba(0, 255, 135, 0.3);
+    }
+
+    .station-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+    }
+
+    .station-number {
+      font-size: 1.35rem;
+      font-weight: 900;
+      color: #fff;
+    }
+
+    .station-meters {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 1.1rem;
+      font-weight: 800;
+      color: var(--accent-green);
+      background: rgba(0, 255, 135, 0.1);
+      border: 1px solid rgba(0, 255, 135, 0.3);
+      padding: 4px 10px;
+      border-radius: 12px;
+    }
+
+    .station-subtext {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    /* Featured Large Photo Container with Pinch Zoom */
+    .featured-photo-container {
+      position: relative;
+      border-radius: 14px;
+      overflow: hidden;
+      background: #05080c;
+      aspect-ratio: 4/5;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      cursor: pointer;
+      user-select: none;
+      touch-action: none; /* Allows custom touch gestures for pinch zoom */
+    }
+
+    .featured-photo-container img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+      transform-origin: center center;
+      will-change: transform;
+      transition: transform 0.05s ease-out;
+    }
+
+    /* Interactive Photo Switch Overlay Tag */
+    .photo-switch-banner {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background: rgba(10, 15, 20, 0.88);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      padding: 6px 10px;
+      border-radius: 8px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: var(--accent-cyan);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+      pointer-events: none;
+    }
+
+    .zoom-hint-banner {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      background: rgba(0, 255, 135, 0.2);
+      border: 1px solid var(--accent-green);
+      padding: 4px 8px;
+      border-radius: 6px;
+      font-size: 0.68rem;
+      font-weight: 800;
+      color: var(--accent-green);
+      pointer-events: none;
+    }
+
+    .photo-info-bar {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: linear-gradient(180deg, transparent, rgba(10, 15, 20, 0.95));
+      padding: 16px 12px 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      pointer-events: none;
+    }
+
+    .photo-badge-index {
+      font-size: 0.75rem;
+      font-weight: 800;
+      color: #fff;
+      background: rgba(255, 255, 255, 0.15);
+      padding: 4px 8px;
+      border-radius: 6px;
+    }
+
+    .photo-heading-text {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: var(--accent-green);
+    }
+
+    /* Placeholder for Station 0 (No Photo) */
+    .no-photo-placeholder {
+      aspect-ratio: 4/3;
+      background: rgba(255, 255, 255, 0.03);
+      border: 2px dashed rgba(255, 255, 255, 0.15);
+      border-radius: 14px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      color: var(--text-muted);
+      text-align: center;
+      padding: 20px;
+    }
+
+    .no-photo-placeholder div.icon {
+      font-size: 2.2rem;
+    }
+
+    /* Distance Interval Footer */
+    .interval-info {
+      background: rgba(255, 255, 255, 0.04);
+      border-radius: 10px;
+      padding: 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.8rem;
+    }
+
+    .maps-link {
+      color: var(--accent-cyan);
+      text-decoration: none;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- App Header -->
+  <header>
+    <div class="header-top">
+      <div class="app-title">
+        🏃 Pista Río la Silla <span class="badge">100m</span>
+      </div>
+      <div id="statusBadge" style="font-size: 0.75rem; color: var(--text-muted);">
+        📍 Pinch Zoom Activo
+      </div>
+    </div>
+
+    <!-- Toggle Mode Controls -->
+    <div class="controls-grid">
+      <button class="btn-toggle active" id="btnSwipe" onclick="setMode('swipe')">
+        📱 Modo Swipe
+      </button>
+      <button class="btn-toggle" id="btnGPS" onclick="setMode('gps')">
+        🛰️ GPS en Vivo
+      </button>
+    </div>
+
+    <!-- Meter Track Bar -->
+    <div class="track-meter-container">
+      <div class="track-labels">
+        <span>Estación -1 (-10m)</span>
+        <span id="meterCurrentLabel" style="color: var(--accent-green); font-weight: bold;">0.0m (Estación 0)</span>
+        <span>Estación 6 (95m)</span>
+      </div>
+      <div class="progress-bar-bg">
+        <div class="progress-bar-fill" id="progressBarFill"></div>
+      </div>
+    </div>
+  </header>
+
+  <!-- GPS Live Telemetry Bar -->
+  <div class="gps-telemetry" id="gpsBar">
+    <div>
+      <strong>📡 GPS Activo:</strong> <span id="gpsDistText">Buscando señal...</span>
+    </div>
+    <div id="gpsCoordsText" style="font-size: 0.7rem; opacity: 0.8;">--.----, --.----</div>
+  </div>
+
+  <!-- Scrollable Station Cards Carousel -->
+  <div class="panorama-scroll-container" id="panoramaScroll">
+
+    <!-- 1. Estación -1 -->
+    <div class="station-card" id="station-minus1" data-meter="-10.0">
+      <div class="station-header">
+        <div>
+          <div class="station-number">Estación -1</div>
+          <div class="station-subtext">⬅️ Desliza a la izq. | Punto Previo al Cero</div>
+        </div>
+        <div class="station-meters" style="color: var(--accent-orange); border-color: rgba(255,159,67,0.3); background: rgba(255,159,67,0.1);">-10.0 m</div>
+      </div>
+
+      <div class="featured-photo-container" data-station="station-minus1">
+        <div class="zoom-hint-banner">🔍 Pinch Zoom / Doble Tap</div>
+        <img id="img-station-minus1" src="IMG_0310.jpg" alt="Estación -1" loading="lazy">
+        <div class="photo-switch-banner">
+          🔄 Tocar para alternar
+        </div>
+        <div class="photo-info-bar">
+          <span class="photo-badge-index" id="badge-station-minus1">Toma 1 / 2</span>
+          <span class="photo-heading-text" id="heading-station-minus1">41.7° NE</span>
+        </div>
+      </div>
+
+      <div class="interval-info">
+        <span>Ajuste previo a Estación 0</span>
+        <a class="maps-link" href="https://www.google.com/maps?q=25.607067,-100.263172" target="_blank">📍 Maps</a>
+      </div>
+    </div>
+
+    <!-- 2. Estación 0 (FOCO INICIAL EN PANTALLA MÓVIL) -->
+    <div class="station-card" id="station-0" data-meter="0.0" style="border-color: var(--accent-green);">
+      <div class="station-header">
+        <div>
+          <div class="station-number">Estación 0 ⭐</div>
+          <div class="station-subtext">🚩 Punto de Inicio Origen (Foco Inicial)</div>
+        </div>
+        <div class="station-meters">0.0 m</div>
+      </div>
+
+      <div class="no-photo-placeholder">
+        <div class="icon">🚩</div>
+        <div><strong>Inicio del Tramo (0.0m)</strong></div>
+        <div style="font-size: 0.78rem; color: var(--accent-cyan); font-weight: 600;">
+          ⬅️ Desliza a la izq. para Estación -1<br>➡️ Desliza a la der. para Estaciones 1 a 6
+        </div>
+      </div>
+
+      <div class="interval-info">
+        <span>Tramo a Estación 1: <strong>+15.0 m</strong></span>
+        <span style="color: var(--accent-green); font-weight: bold; font-size: 0.78rem;">Punto Cero</span>
+      </div>
+    </div>
+
+    <!-- 3. Estación 1 -->
+    <div class="station-card" id="station-1" data-meter="15.0">
+      <div class="station-header">
+        <div>
+          <div class="station-number">Estación 1</div>
+          <div class="station-subtext">📍 Marca 15 Metros</div>
+        </div>
+        <div class="station-meters">15.0 m</div>
+      </div>
+
+      <div class="featured-photo-container" data-station="station-1">
+        <div class="zoom-hint-banner">🔍 Pinch Zoom / Doble Tap</div>
+        <img id="img-station-1" src="IMG_0298.jpg" alt="Estación 1" loading="lazy">
+        <div class="photo-switch-banner">
+          🔄 Tocar para alternar
+        </div>
+        <div class="photo-info-bar">
+          <span class="photo-badge-index" id="badge-station-1">Toma 1 / 2</span>
+          <span class="photo-heading-text" id="heading-station-1">234.1° SW</span>
+        </div>
+      </div>
+
+      <div class="interval-info">
+        <span>Tramo a Estación 2: <strong>+15.0 m</strong></span>
+        <a class="maps-link" href="https://www.google.com/maps?q=25.607223,-100.263310" target="_blank">📍 Maps</a>
+      </div>
+    </div>
+
+    <!-- 4. Estación 2 -->
+    <div class="station-card" id="station-2" data-meter="30.0">
+      <div class="station-header">
+        <div>
+          <div class="station-number">Estación 2</div>
+          <div class="station-subtext">📍 Marca 30 Metros</div>
+        </div>
+        <div class="station-meters">30.0 m</div>
+      </div>
+
+      <div class="featured-photo-container" data-station="station-2">
+        <div class="zoom-hint-banner">🔍 Pinch Zoom / Doble Tap</div>
+        <img id="img-station-2" src="IMG_0300.jpg" alt="Estación 2" loading="lazy">
+        <div class="photo-switch-banner">
+          🔄 Tocar para alternar
+        </div>
+        <div class="photo-info-bar">
+          <span class="photo-badge-index" id="badge-station-2">Toma 1 / 2</span>
+          <span class="photo-heading-text" id="heading-station-2">233.9° SW</span>
+        </div>
+      </div>
+
+      <div class="interval-info">
+        <span>Tramo a Estación 3: <strong>+15.0 m</strong></span>
+        <a class="maps-link" href="https://www.google.com/maps?q=25.607379,-100.263404" target="_blank">📍 Maps</a>
+      </div>
+    </div>
+
+    <!-- 5. Estación 3 -->
+    <div class="station-card" id="station-3" data-meter="45.0">
+      <div class="station-header">
+        <div>
+          <div class="station-number">Estación 3</div>
+          <div class="station-subtext">📍 Marca 45 Metros</div>
+        </div>
+        <div class="station-meters">45.0 m</div>
+      </div>
+
+      <div class="featured-photo-container" data-station="station-3">
+        <div class="zoom-hint-banner">🔍 Pinch Zoom / Doble Tap</div>
+        <img id="img-station-3" src="IMG_0302.jpg" alt="Estación 3" loading="lazy">
+        <div class="photo-switch-banner">
+          🔄 Tocar para alternar
+        </div>
+        <div class="photo-info-bar">
+          <span class="photo-badge-index" id="badge-station-3">Toma 1 / 2</span>
+          <span class="photo-heading-text" id="heading-station-3">220.6° SW</span>
+        </div>
+      </div>
+
+      <div class="interval-info">
+        <span>Tramo a Estación 4: <strong>+15.0 m</strong></span>
+        <a class="maps-link" href="https://www.google.com/maps?q=25.607471,-100.263508" target="_blank">📍 Maps</a>
+      </div>
+    </div>
+
+    <!-- 6. Estación 4 -->
+    <div class="station-card" id="station-4" data-meter="60.0">
+      <div class="station-header">
+        <div>
+          <div class="station-number">Estación 4</div>
+          <div class="station-subtext">📍 Marca 60 Metros</div>
+        </div>
+        <div class="station-meters">60.0 m</div>
+      </div>
+
+      <div class="featured-photo-container" data-station="station-4">
+        <div class="zoom-hint-banner">🔍 Pinch Zoom / Doble Tap</div>
+        <img id="img-station-4" src="IMG_0304.jpg" alt="Estación 4" loading="lazy">
+        <div class="photo-switch-banner">
+          🔄 Tocar para alternar
+        </div>
+        <div class="photo-info-bar">
+          <span class="photo-badge-index" id="badge-station-4">Toma 1 / 2</span>
+          <span class="photo-heading-text" id="heading-station-4">228.3° SW</span>
+        </div>
+      </div>
+
+      <div class="interval-info">
+        <span>Tramo a Estación 5: <strong>+15.0 m</strong></span>
+        <a class="maps-link" href="https://www.google.com/maps?q=25.607574,-100.263567" target="_blank">📍 Maps</a>
+      </div>
+    </div>
+
+    <!-- 7. Estación 5 -->
+    <div class="station-card" id="station-5" data-meter="75.0">
+      <div class="station-header">
+        <div>
+          <div class="station-number">Estación 5</div>
+          <div class="station-subtext">📍 Marca 75 Metros</div>
+        </div>
+        <div class="station-meters">75.0 m</div>
+      </div>
+
+      <div class="featured-photo-container" data-station="station-5">
+        <div class="zoom-hint-banner">🔍 Pinch Zoom / Doble Tap</div>
+        <img id="img-station-5" src="IMG_0306.jpg" alt="Estación 5" loading="lazy">
+        <div class="photo-switch-banner">
+          🔄 Tocar para alternar
+        </div>
+        <div class="photo-info-bar">
+          <span class="photo-badge-index" id="badge-station-5">Toma 1 / 2</span>
+          <span class="photo-heading-text" id="heading-station-5">219.7° SW</span>
+        </div>
+      </div>
+
+      <div class="interval-info">
+        <span>Tramo a Estación 6: <strong>+20.0 m</strong></span>
+        <a class="maps-link" href="https://www.google.com/maps?q=25.607671,-100.263675" target="_blank">📍 Maps</a>
+      </div>
+    </div>
+
+    <!-- 8. Estación 6 -->
+    <div class="station-card" id="station-6" data-meter="95.0">
+      <div class="station-header">
+        <div>
+          <div class="station-number">Estación 6</div>
+          <div class="station-subtext">🏁 Marca 95m / 100m Final</div>
+        </div>
+        <div class="station-meters">95.0 m</div>
+      </div>
+
+      <div class="featured-photo-container" data-station="station-6">
+        <div class="zoom-hint-banner">🔍 Pinch Zoom / Doble Tap</div>
+        <img id="img-station-6" src="IMG_0308.jpg" alt="Estación 6" loading="lazy">
+        <div class="photo-switch-banner">
+          🔄 Tocar para alternar
+        </div>
+        <div class="photo-info-bar">
+          <span class="photo-badge-index" id="badge-station-6">Toma 1 / 2</span>
+          <span class="photo-heading-text" id="heading-station-6">234.4° SW</span>
+        </div>
+      </div>
+
+      <div class="interval-info">
+        <span>Meta Alcanzada: <strong>95m / 100m</strong></span>
+        <a class="maps-link" href="https://www.google.com/maps?q=25.607819,-100.263803" target="_blank">📍 Maps</a>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    // Station Data with Photo Pairs
+    const STATION_PHOTOS = {
+      'station-minus1': [
+        { src: 'IMG_0310.jpg', heading: '41.7° NE' },
+        { src: 'IMG_0311.jpg', heading: '305.1° NW' }
+      ],
+      'station-1': [
+        { src: 'IMG_0298.jpg', heading: '234.1° SW' },
+        { src: 'IMG_0299.jpg', heading: '136.7° SE' }
+      ],
+      'station-2': [
+        { src: 'IMG_0300.jpg', heading: '233.9° SW' },
+        { src: 'IMG_0301.jpg', heading: '147.7° SE' }
+      ],
+      'station-3': [
+        { src: 'IMG_0302.jpg', heading: '220.6° SW' },
+        { src: 'IMG_0303.jpg', heading: '65.7° NE' }
+      ],
+      'station-4': [
+        { src: 'IMG_0304.jpg', heading: '228.3° SW' },
+        { src: 'IMG_0305.jpg', heading: '229.6° SW' }
+      ],
+      'station-5': [
+        { src: 'IMG_0306.jpg', heading: '219.7° SW' },
+        { src: 'IMG_0307.jpg', heading: '64.5° NE' }
+      ],
+      'station-6': [
+        { src: 'IMG_0308.jpg', heading: '234.4° SW' },
+        { src: 'IMG_0309.jpg', heading: '82.2° E' }
+      ]
+    };
+
+    const activePhotoIndex = {};
+    Object.keys(STATION_PHOTOS).forEach(key => activePhotoIndex[key] = 0);
+
+    // Toggle Photo Substitution
+    function togglePhoto(stationId) {
+      const photos = STATION_PHOTOS[stationId];
+      if (!photos) return;
+
+      activePhotoIndex[stationId] = (activePhotoIndex[stationId] + 1) % photos.length;
+      const curIndex = activePhotoIndex[stationId];
+      const photoData = photos[curIndex];
+
+      const imgEl = document.getElementById(`img-${stationId}`);
+      const badgeEl = document.getElementById(`badge-${stationId}`);
+      const headingEl = document.getElementById(`heading-${stationId}`);
+
+      if (imgEl) {
+        imgEl.style.opacity = '0.3';
+        setTimeout(() => {
+          imgEl.src = photoData.src;
+          imgEl.style.opacity = '1';
+        }, 150);
+      }
+      if (badgeEl) badgeEl.textContent = `Toma ${curIndex + 1} / ${photos.length}`;
+      if (headingEl) headingEl.textContent = photoData.heading;
+    }
+
+    // Pinch Zoom & Double Tap Implementation
+    document.querySelectorAll('.featured-photo-container').forEach(container => {
+      const img = container.querySelector('img');
+      const stationId = container.dataset.station;
+
+      let scale = 1;
+      let startDist = 0;
+      let startScale = 1;
+      let touchStartTime = 0;
+      let lastTapTime = 0;
+      let isPinching = false;
+
+      function setTransform(s) {
+        scale = Math.min(Math.max(1, s), 4);
+        img.style.transform = `scale(${scale})`;
+        
+        // Lock container scrolling when zoomed in
+        const panorama = document.getElementById('panoramaScroll');
+        if (scale > 1.05) {
+          panorama.classList.add('lock-scroll');
+        } else {
+          panorama.classList.remove('lock-scroll');
+        }
+      }
+
+      function getDistance(t1, t2) {
+        const dx = t1.clientX - t2.clientX;
+        const dy = t1.clientY - t2.clientY;
+        return Math.hypot(dx, dy);
+      }
+
+      container.addEventListener('touchstart', (e) => {
+        touchStartTime = Date.now();
+
+        if (e.touches.length === 2) {
+          isPinching = true;
+          startDist = getDistance(e.touches[0], e.touches[1]);
+          startScale = scale;
+        }
+      }, { passive: true });
+
+      container.addEventListener('touchmove', (e) => {
+        if (e.touches.length === 2 && isPinching) {
+          e.preventDefault();
+          const dist = getDistance(e.touches[0], e.touches[1]);
+          const newScale = startScale * (dist / startDist);
+          setTransform(newScale);
+        }
+      }, { passive: false });
+
+      container.addEventListener('touchend', (e) => {
+        const touchDuration = Date.now() - touchStartTime;
+
+        if (isPinching && e.touches.length < 2) {
+          isPinching = false;
+          if (scale < 1.1) setTransform(1);
+          return;
+        }
+
+        // Single tap or double tap
+        if (!isPinching && touchDuration < 300) {
+          const currentTime = Date.now();
+          const tapLength = currentTime - lastTapTime;
+
+          if (tapLength < 300 && tapLength > 0) {
+            // Double tap to toggle 2.5x zoom / reset
+            e.preventDefault();
+            if (scale > 1.2) {
+              setTransform(1);
+            } else {
+              setTransform(2.5);
+            }
+          } else {
+            // Single tap to toggle photo substitution (if not zoomed in)
+            if (scale <= 1.1) {
+              togglePhoto(stationId);
+            }
+          }
+          lastTapTime = currentTime;
+        }
+      });
+    });
+
+    // Set Initial Scroll Position Focus on Station 0 on Load
+    function focusStationZero() {
+      const container = document.getElementById('panoramaScroll');
+      const station0 = document.getElementById('station-0');
+      if (container && station0) {
+        station0.scrollIntoView({ behavior: 'instant', inline: 'center', block: 'nearest' });
+      }
+    }
+
+    window.addEventListener('load', () => {
+      setTimeout(focusStationZero, 100);
+    });
+
+    // Station GPS Coordinates
+    const STATIONS = [
+      { id: 'station-minus1', meter: -10.0, lat: 25.607067, lon: -100.263172 },
+      { id: 'station-0', meter: 0.0, lat: 25.607100, lon: -100.263220 },
+      { id: 'station-1', meter: 15.0, lat: 25.607223, lon: -100.263310 },
+      { id: 'station-2', meter: 30.0, lat: 25.607379, lon: -100.263404 },
+      { id: 'station-3', meter: 45.0, lat: 25.607471, lon: -100.263508 },
+      { id: 'station-4', meter: 60.0, lat: 25.607574, lon: -100.263567 },
+      { id: 'station-5', meter: 75.0, lat: 25.607671, lon: -100.263675 },
+      { id: 'station-6', meter: 95.0, lat: 25.607819, lon: -100.263803 }
+    ];
+
+    let currentMode = 'swipe';
+    let watchId = null;
+
+    function haversine(lat1, lon1, lat2, lon2) {
+      const R = 6371000;
+      const dLat = (lat2 - lat1) * Math.PI / 180;
+      const dLon = (lon2 - lon1) * Math.PI / 180;
+      const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                Math.sin(dLon/2) * Math.sin(dLon/2);
+      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+      return R * c;
+    }
+
+    // Scroll Progress Sync
+    const container = document.getElementById('panoramaScroll');
+    container.addEventListener('scroll', () => {
+      if (currentMode !== 'swipe') return;
+      const maxScroll = container.scrollWidth - container.clientWidth;
+      if (maxScroll > 0) {
+        const scrollPct = container.scrollLeft / maxScroll;
+        const currentMeters = ((scrollPct * 105.0) - 10.0).toFixed(1);
+        document.getElementById('progressBarFill').style.width = (scrollPct * 100) + '%';
+        document.getElementById('meterCurrentLabel').textContent = currentMeters + 'm';
+      }
+    });
+
+    // Toggle Modes
+    function setMode(mode) {
+      currentMode = mode;
+      document.getElementById('btnSwipe').classList.toggle('active', mode === 'swipe');
+      document.getElementById('btnGPS').classList.toggle('active', mode === 'gps');
+      const gpsBar = document.getElementById('gpsBar');
+
+      if (mode === 'gps') {
+        gpsBar.classList.add('active');
+        startGPS();
+      } else {
+        gpsBar.classList.remove('active');
+        stopGPS();
+      }
+    }
+
+    // GPS Tracking
+    function startGPS() {
+      if (!('geolocation' in navigator)) {
+        alert('El GPS no está disponible en este dispositivo.');
+        return;
+      }
+
+      watchId = navigator.geolocation.watchPosition(pos => {
+        const userLat = pos.coords.latitude;
+        const userLon = pos.coords.longitude;
+        document.getElementById('gpsCoordsText').textContent = `${userLat.toFixed(6)}, ${userLon.toFixed(6)}`;
+
+        const distFromStart = haversine(STATIONS[1].lat, STATIONS[1].lon, userLat, userLon);
+        document.getElementById('gpsDistText').textContent = `En pista: ~${distFromStart.toFixed(1)} m`;
+
+        const pct = Math.min(100, Math.max(0, (distFromStart / 95.0) * 100));
+        document.getElementById('progressBarFill').style.width = pct + '%';
+        document.getElementById('meterCurrentLabel').textContent = distFromStart.toFixed(1) + 'm';
+
+        let minStationDist = Infinity;
+        let nearestStation = STATIONS[1];
+        STATIONS.forEach(st => {
+          const d = haversine(st.lat, st.lon, userLat, userLon);
+          if (d < minStationDist) {
+            minStationDist = d;
+            nearestStation = st;
+          }
+        });
+
+        STATIONS.forEach(st => {
+          const el = document.getElementById(st.id);
+          if (el) el.classList.remove('active-gps');
+        });
+        const activeCard = document.getElementById(nearestStation.id);
+        if (activeCard) {
+          activeCard.classList.add('active-gps');
+          activeCard.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+        }
+
+      }, err => {
+        document.getElementById('gpsDistText').textContent = 'Error al obtener señal GPS';
+      }, {
+        enableHighAccuracy: true,
+        maximumAge: 1000,
+        timeout: 10000
+      });
+    }
+
+    function stopGPS() {
+      if (watchId !== null) {
+        navigator.geolocation.clearWatch(watchId);
+        watchId = null;
+      }
+    }
+  </script>
+</body>
+</html>
