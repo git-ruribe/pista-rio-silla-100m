@@ -227,7 +227,7 @@
       margin-top: 2px;
     }
 
-    /* Featured Large Photo Container with Pinch Zoom */
+    /* Featured Large Photo Container with Focal Pinch Zoom & Pan */
     .featured-photo-container {
       position: relative;
       border-radius: 14px;
@@ -235,9 +235,13 @@
       background: #05080c;
       aspect-ratio: 4/5;
       border: 1px solid rgba(255, 255, 255, 0.15);
-      cursor: pointer;
+      cursor: grab;
       user-select: none;
-      touch-action: none; /* Allows custom touch gestures for pinch zoom */
+      touch-action: none;
+    }
+
+    .featured-photo-container:active {
+      cursor: grabbing;
     }
 
     .featured-photo-container img {
@@ -245,9 +249,9 @@
       height: 100%;
       object-fit: cover;
       display: block;
-      transform-origin: center center;
+      transform-origin: 0 0;
       will-change: transform;
-      transition: transform 0.05s ease-out;
+      transition: transform 0.05s linear;
     }
 
     /* Interactive Photo Switch Overlay Tag */
@@ -269,6 +273,7 @@
       gap: 6px;
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
       pointer-events: none;
+      z-index: 10;
     }
 
     .zoom-hint-banner {
@@ -283,6 +288,7 @@
       font-weight: 800;
       color: var(--accent-green);
       pointer-events: none;
+      z-index: 10;
     }
 
     .photo-info-bar {
@@ -296,6 +302,7 @@
       justify-content: space-between;
       align-items: flex-end;
       pointer-events: none;
+      z-index: 10;
     }
 
     .photo-badge-index {
@@ -364,7 +371,7 @@
         🏃 Pista Río la Silla <span class="badge">100m</span>
       </div>
       <div id="statusBadge" style="font-size: 0.75rem; color: var(--text-muted);">
-        📍 Pinch Zoom Activo
+        🔍 HD 2800px + Zoom Focal
       </div>
     </div>
 
@@ -413,7 +420,7 @@
       </div>
 
       <div class="featured-photo-container" data-station="station-minus1">
-        <div class="zoom-hint-banner">🔍 Pinch Zoom / Doble Tap</div>
+        <div class="zoom-hint-banner">🔍 Pinch Zoom + Arrastrar</div>
         <img id="img-station-minus1" src="IMG_0310.jpg" alt="Estación -1" loading="lazy">
         <div class="photo-switch-banner">
           🔄 Tocar para alternar
@@ -465,7 +472,7 @@
       </div>
 
       <div class="featured-photo-container" data-station="station-1">
-        <div class="zoom-hint-banner">🔍 Pinch Zoom / Doble Tap</div>
+        <div class="zoom-hint-banner">🔍 Pinch Zoom + Arrastrar</div>
         <img id="img-station-1" src="IMG_0298.jpg" alt="Estación 1" loading="lazy">
         <div class="photo-switch-banner">
           🔄 Tocar para alternar
@@ -493,7 +500,7 @@
       </div>
 
       <div class="featured-photo-container" data-station="station-2">
-        <div class="zoom-hint-banner">🔍 Pinch Zoom / Doble Tap</div>
+        <div class="zoom-hint-banner">🔍 Pinch Zoom + Arrastrar</div>
         <img id="img-station-2" src="IMG_0300.jpg" alt="Estación 2" loading="lazy">
         <div class="photo-switch-banner">
           🔄 Tocar para alternar
@@ -521,7 +528,7 @@
       </div>
 
       <div class="featured-photo-container" data-station="station-3">
-        <div class="zoom-hint-banner">🔍 Pinch Zoom / Doble Tap</div>
+        <div class="zoom-hint-banner">🔍 Pinch Zoom + Arrastrar</div>
         <img id="img-station-3" src="IMG_0302.jpg" alt="Estación 3" loading="lazy">
         <div class="photo-switch-banner">
           🔄 Tocar para alternar
@@ -549,7 +556,7 @@
       </div>
 
       <div class="featured-photo-container" data-station="station-4">
-        <div class="zoom-hint-banner">🔍 Pinch Zoom / Doble Tap</div>
+        <div class="zoom-hint-banner">🔍 Pinch Zoom + Arrastrar</div>
         <img id="img-station-4" src="IMG_0304.jpg" alt="Estación 4" loading="lazy">
         <div class="photo-switch-banner">
           🔄 Tocar para alternar
@@ -577,7 +584,7 @@
       </div>
 
       <div class="featured-photo-container" data-station="station-5">
-        <div class="zoom-hint-banner">🔍 Pinch Zoom / Doble Tap</div>
+        <div class="zoom-hint-banner">🔍 Pinch Zoom + Arrastrar</div>
         <img id="img-station-5" src="IMG_0306.jpg" alt="Estación 5" loading="lazy">
         <div class="photo-switch-banner">
           🔄 Tocar para alternar
@@ -605,7 +612,7 @@
       </div>
 
       <div class="featured-photo-container" data-station="station-6">
-        <div class="zoom-hint-banner">🔍 Pinch Zoom / Doble Tap</div>
+        <div class="zoom-hint-banner">🔍 Pinch Zoom + Arrastrar</div>
         <img id="img-station-6" src="IMG_0308.jpg" alt="Estación 6" loading="lazy">
         <div class="photo-switch-banner">
           🔄 Tocar para alternar
@@ -684,23 +691,49 @@
       if (headingEl) headingEl.textContent = photoData.heading;
     }
 
-    // Pinch Zoom & Double Tap Implementation
+    // Focal Point Pinch-to-Zoom & Pan / Drag Implementation
     document.querySelectorAll('.featured-photo-container').forEach(container => {
       const img = container.querySelector('img');
       const stationId = container.dataset.station;
 
       let scale = 1;
-      let startDist = 0;
+      let posX = 0;
+      let posY = 0;
+
       let startScale = 1;
+      let startPosX = 0;
+      let startPosY = 0;
+
+      let touchStartCenter = { x: 0, y: 0 };
+      let startDist = 0;
+      let isPinching = false;
+      let isPanning = false;
+
+      let panStartX = 0;
+      let panStartY = 0;
+
       let touchStartTime = 0;
       let lastTapTime = 0;
-      let isPinching = false;
 
-      function setTransform(s) {
-        scale = Math.min(Math.max(1, s), 4);
-        img.style.transform = `scale(${scale})`;
-        
-        // Lock container scrolling when zoomed in
+      function updateTransform() {
+        // Clamp scale between 1x and 4.5x
+        scale = Math.min(Math.max(1, scale), 4.5);
+
+        const rect = container.getBoundingClientRect();
+        const maxTransX = ((scale - 1) * rect.width) / 2;
+        const maxTransY = ((scale - 1) * rect.height) / 2;
+
+        if (scale <= 1.05) {
+          posX = 0;
+          posY = 0;
+          scale = 1;
+        } else {
+          posX = Math.min(Math.max(-maxTransX, posX), maxTransX);
+          posY = Math.min(Math.max(-maxTransY, posY), maxTransY);
+        }
+
+        img.style.transform = `translate(${posX}px, ${posY}px) scale(${scale})`;
+
         const panorama = document.getElementById('panoramaScroll');
         if (scale > 1.05) {
           panorama.classList.add('lock-scroll');
@@ -715,13 +748,31 @@
         return Math.hypot(dx, dy);
       }
 
+      function getCenter(t1, t2) {
+        const rect = container.getBoundingClientRect();
+        return {
+          x: (t1.clientX + t2.clientX) / 2 - rect.left,
+          y: (t1.clientY + t2.clientY) / 2 - rect.top
+        };
+      }
+
       container.addEventListener('touchstart', (e) => {
         touchStartTime = Date.now();
 
         if (e.touches.length === 2) {
           isPinching = true;
+          isPanning = false;
           startDist = getDistance(e.touches[0], e.touches[1]);
           startScale = scale;
+          touchStartCenter = getCenter(e.touches[0], e.touches[1]);
+          startPosX = posX;
+          startPosY = posY;
+        } else if (e.touches.length === 1) {
+          if (scale > 1.05) {
+            isPanning = true;
+            panStartX = e.touches[0].clientX - posX;
+            panStartY = e.touches[0].clientY - posY;
+          }
         }
       }, { passive: true });
 
@@ -730,7 +781,21 @@
           e.preventDefault();
           const dist = getDistance(e.touches[0], e.touches[1]);
           const newScale = startScale * (dist / startDist);
-          setTransform(newScale);
+
+          // Calculate focal point shift
+          const currentCenter = getCenter(e.touches[0], e.touches[1]);
+          const scaleChange = newScale / startScale;
+
+          posX = currentCenter.x - (touchStartCenter.x - startPosX) * scaleChange;
+          posY = currentCenter.y - (touchStartCenter.y - startPosY) * scaleChange;
+          scale = newScale;
+
+          updateTransform();
+        } else if (e.touches.length === 1 && isPanning && scale > 1.05) {
+          e.preventDefault();
+          posX = e.touches[0].clientX - panStartX;
+          posY = e.touches[0].clientY - panStartY;
+          updateTransform();
         }
       }, { passive: false });
 
@@ -739,26 +804,41 @@
 
         if (isPinching && e.touches.length < 2) {
           isPinching = false;
-          if (scale < 1.1) setTransform(1);
+          if (scale < 1.05) updateTransform();
           return;
         }
 
-        // Single tap or double tap
+        if (isPanning && e.touches.length === 0) {
+          isPanning = false;
+        }
+
+        // Tap handling
         if (!isPinching && touchDuration < 300) {
           const currentTime = Date.now();
           const tapLength = currentTime - lastTapTime;
 
           if (tapLength < 300 && tapLength > 0) {
-            // Double tap to toggle 2.5x zoom / reset
+            // Double tap: zoom into tap location or reset
             e.preventDefault();
-            if (scale > 1.2) {
-              setTransform(1);
+            if (scale > 1.1) {
+              scale = 1;
+              posX = 0;
+              posY = 0;
             } else {
-              setTransform(2.5);
+              const rect = container.getBoundingClientRect();
+              const touch = e.changedTouches[0];
+              const tapX = touch.clientX - rect.left;
+              const tapY = touch.clientY - rect.top;
+
+              scale = 3.0;
+              // Center zoom around double-tap point
+              posX = (rect.width / 2 - tapX) * 2;
+              posY = (rect.height / 2 - tapY) * 2;
             }
+            updateTransform();
           } else {
-            // Single tap to toggle photo substitution (if not zoomed in)
-            if (scale <= 1.1) {
+            // Single tap: toggle photo (only if not zoomed in)
+            if (scale <= 1.05) {
               togglePhoto(stationId);
             }
           }
